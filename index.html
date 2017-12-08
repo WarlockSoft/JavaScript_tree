@@ -1,0 +1,107 @@
+﻿<html>
+<head>
+<title>Файловый менеджер</title>
+<style>
+li {
+    list-style-type: none; /* Убираем маркеры */
+	padding-left:10px;
+   }
+ul{
+	margin:0;
+}
+.closed{
+	background: url(./closed.png) no-repeat;
+	padding:0 0 0 10px;
+}
+.opened{
+	background: url(./opened.png) no-repeat;
+	padding:0 0 0 10px;
+}
+
+</style>
+</head>
+<body>
+<div id="DOMTree"></div>
+
+<script>
+
+const json = '{"data":[{"itemId":1, "itemName":"пункт №1", "itemParentId":0},{"itemId":2, "itemName":"пункт №1.1", "itemParentId":1},{"itemId":3, "itemName":"пункт №1.2", "itemParentId":1},{"itemId":4, "itemName":"пункт №1.2.1", "itemParentId":3},	{"itemId":5, "itemName":"пункт №1.2.2", "itemParentId":3},{"itemId":6, "itemName":"пункт №1.2.3", "itemParentId":3},{"itemId":7, "itemName":"пункт №2", "itemParentId":0},{"itemId":8, "itemName":"пункт №3", "itemParentId":0},{"itemId":9, "itemName":"пункт №3.1", "itemParentId":8},{"itemId":10, "itemName":"пункт №3.2", "itemParentId":8},{"itemId":11, "itemName":"пункт №3.3", "itemParentId":8},{"itemId":12, "itemName":"пункт №3.3.1", "itemParentId":11},{"itemId":13, "itemName":"пункт №3.3.1.1", "itemParentId":12},{"itemId":14, "itemName":"пункт №3.3.1.2", "itemParentId":12},{"itemId":15, "itemName":"пункт №3.3.1.3", "itemParentId":12},{"itemId":16, "itemName":"пункт №3.3.2", "itemParentId":11},{"itemId":17, "itemName":"пункт №4", "itemParentId":0},{"itemId":18, "itemName":"пункт №5", "itemParentId":0},{"itemId":19, "itemName":"пункт №5.1", "itemParentId":18},{"itemId":20, "itemName":"пункт №1.3", "itemParentId":1},{"itemId":21, "itemName":"пункт №1.2.1.1", "itemParentId":4},{"itemId":22, "itemName":"пункт №3.3.1.2.1", "itemParentId":14}]}';
+const obj = JSON.parse(json);
+//Проходим весь массив
+for (let file of obj.data){
+	//Если запись в json не имеет родителя
+	if(file.itemParentId === 0){
+		//в качестве родителя указываем главный div
+		const parent = document.getElementById('DOMTree'); 
+		//Создаем элемент, присваиваем id, пишем текст и прикручиваем обработчик клика с передачей текущей записи в json. Затем добавлем элемент
+		const li = document.createElement('LI');
+		li.id = file.itemId;
+		li.onclick = click.bind(file);
+		li.innerHTML = file.itemName;
+		parent.appendChild(li);
+	}
+	else{
+		//Если у элемента в jsone есть родитель, то находим его в DOM-дереве
+		const parent =  document.getElementById(file.itemParentId);
+		//Пытаемся найти нужный тег ul
+		let  needUl = document.getElementById("el" + file.itemParentId);
+		//Если его нет, создаем. Присваиваем ему ID, скрываем его.
+		if (needUl === null){
+			const ul = document.createElement('UL');
+			ul.id = "el" + file.itemParentId;
+			ul.style.display="none";
+			//Если следущего элемента не существует, то просто добавляем его в родительский элемент
+			//Если следующий элемент существует, то ставим его перед ним. В этой связи можно будет расширять дерево не перетрухивая сам JSON 
+			if (parent.nextSibling === null){
+				parent.parentNode.appendChild(ul);	
+			}
+			else{
+				parent.parentNode.insertBefore(ul, parent.nextSibling);
+			}
+			//Находим нужный нам элемент UL
+			needUl = document.getElementById("el" + file.itemParentId);
+		}
+		//Создаем элемент LI
+		const li = document.createElement('LI');
+		//Проверяем, если у его родителя нет класса closed, добавляем его. Это поможет понимать какие элементы имеют дочерние элементы.
+		if (!parent.classList.contains("closed")){
+			parent.classList.add("closed");
+		}
+		//Добавляем элементу идентификатор, прикручиваем обработчик клика с передачей записи из JSON, пишем текст		
+		li.id=file.itemId;
+		li.onclick = click.bind(file);
+		li.innerHTML = file.itemName;
+		//Добавляем элемент на страницу
+		needUl.insertBefore(li, null);
+		
+	}
+}
+   //Функция, запускающаяся по нажатию кнопки на элемент. В качестве контекста функции передана запись из JSON-файла
+   
+function click(){
+	//Находим нужатый элемент	
+	const obj = document.getElementById(this.itemId);
+	//Если у него есть классы closed или opened, инвертируем их
+	if (obj.classList.contains("closed") || obj.classList.contains("opened")){
+		obj.classList.toggle("closed");
+		obj.classList.toggle("opened");
+		//Находим нужный нам элемент UL
+		const needUl = document.getElementById("el" + this.itemId);
+		//Есои он скрыт, показываем его и меняем цвет. В противном случае скрываем его и возвращаем дефольтный цвет.
+		if (needUl.style.display === "none"){
+			needUl.style.display = "block";
+			obj.style.color = "#bc0a23"; 
+		}
+		else{
+			needUl.style.display = "none";
+			obj.style.color = "#000";
+		}
+	}
+};
+
+
+
+</script>
+
+</body>
+</html>
